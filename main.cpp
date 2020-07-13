@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <conio.h>
 #include <tchar.h>
+#include <conio.h>
 
 using namespace std;
 
@@ -49,6 +50,7 @@ vector<int> prefer_movie(int, int);
 
 void mainPage();
 void check(int);
+void displayMovies();
 
 
 void mainPage(){
@@ -69,6 +71,40 @@ void mainPage(){
     int a=0;
     cin >> a;
     check(a);
+    exit(0);
+}
+
+void displayMovies()
+{
+    system("CLS");
+    fflush(stdout);
+    HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+    cout << "\t-----------------------------\n";
+    cout << "\t\tDisplay Movies\n";
+    cout << "\t-----------------------------\n\n";
+    cout << "\tMovie id\tMovie name" << setw(50) << " Year\n";
+    cout << "\t--------\t----------" << setw(50) << " ----\n";
+    for(int i=0; i < MOVIES_LENGTH; i++){
+        cout << "\t" << movies[i].ID << "\t\t" << left << setw(50) << movies[i].name << "\t" << movies[i].year << "\n";
+    }
+
+    cout << "\n\n\t";
+    cout << "Press 'm' to Main Menu, and 'q' to Quit\n";
+    
+    char c;
+    cout << "\t";
+    
+    while(1) {
+        SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+        c = getch();
+        if(c == 'm') mainPage();
+        else if(c == 'q') exit(0);
+        else {
+            SetConsoleTextAttribute(hStdOut, FOREGROUND_RED);
+            cout << "\n\tThis option is invalid. Try again: ";
+        }
+    }
 }
 
 
@@ -78,7 +114,7 @@ void check(int a)
     {
     case 1:
         system("CLS");
-        //Addition();
+        displayMovies();
         break;
 
     case 2:
@@ -107,8 +143,7 @@ void check(int a)
         break;
 
     case 7:
-        system("CLS");
-        //Power();
+        exit(0);
         break;
     default:
 
@@ -124,10 +159,10 @@ void check(int a)
 
 
 int main() {
-    /*
     load_movies();
     load_rating_mat();
     calc_similarity();
+    /*
     vector<int> topN = topNSimilarities(1, NUMBEROFNEIGHBOURS);
     */
     mainPage();
@@ -166,6 +201,7 @@ void update_movies_files(vector<movie> movies)
         ofile<<(i == movies.size() - 1 ? '\0' : '\n');
     }
 }
+
 void load_movies(){
     ifstream file("Movies.txt");
     string line;
