@@ -1,0 +1,11 @@
+# depslib dependency file v1.0
+1594645927 source:c:\users\moham\desktop\cpp\rudimentaryrecommendersystem\main.cpp
+	<sstream>
+	<fstream>
+	<string>
+	<vector>
+	<iostream>
+	<cstdlib>
+	<assert.h>
+	<cmath>
+
