@@ -6,13 +6,23 @@
 #include <cstdlib>
 #include <cmath>
 #include <algorithm>
+#include <windows.h>
+#include <time.h>
+#include <bits/stdc++.h>
+#include <tgmath.h>
+#include <stdlib.h>
+#include <conio.h>
+#include <tchar.h>
 
 using namespace std;
 
 #define MOVIES_LENGTH 60
 #define USERS_LENGTH 50
+#define NUMBEROFNEIGHBOURS 1
+#define TOPNMOVIES 1
 
-float similarity_all[USERS_LENGTH][MOVIES_LENGTH];
+float similarity_all[USERS_LENGTH][USERS_LENGTH];
+float similarity_all_duplicate[USERS_LENGTH][USERS_LENGTH];
 
 struct movie {
     int ID;
@@ -27,21 +37,120 @@ struct movie {
 vector<movie> movies;
 
 movie processor(vector<string>);
-
 void load_movies();
 void load_rating_mat();
 void calc_similarity();
 vector<int> topNSimilarities(int, int);
 float similarity(int, int);
 
+float prediction_value(int, int, vector<int>);
+vector<pair<int,float> > predict_nulls(int);
+vector<int> prefer_movie(int, int);
+
+void loaderScreen();
+void mainPage();
+void check(int);
+
+
+void loaderScreen()
+{
+    char a=177,b=219;
+    //SetConsoleTitle("Loading");
+    HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    SetConsoleTextAttribute(hStdOut, 0x02);
+
+    cout << "\n\n\n\n\n\n\t\t\t\t\t\t\tLoading...\n";
+    cout << "\n\t\t\t\t\t";
+
+    for(int i=0;i<40;i++)
+    {
+        cout << b;
+        Sleep(20);
+    }
+}
+
+
+void mainPage(){
+    system("CLS");
+    HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN);
+
+    cout << "\n\tPlease choose your desired operation ;) ";
+    SetConsoleTextAttribute(hStdOut, FOREGROUND_BLUE | FOREGROUND_GREEN);
+    string s="\n\n\n\t\t1.\tDisplay movies\n\t\t2.\tDisplay ratings\n\t\t3.\tDisplay similarity between two users\n\t\t4.\tGenerate recommendations\n\t\t5.\tRate a movie\n\t\t6.\tAdd/Remove a movie\n\t\t7.\tExit\n\n\t--------------------------------------------------------------------------------\n\n\t\t\t";
+    for(int i=0;i<s.size();i++)
+    {
+        cout << s.at(i);
+        Sleep(2);
+    }
+    int a=0;
+    cin >> a;
+    check(a);
+}
+
+
+void check(int a)
+{
+    switch(a)
+    {
+    case 1:
+        system("CLS");
+        loaderScreen();
+        //Addition();
+        break;
+
+    case 2:
+        system("CLS");
+        loaderScreen();
+        //Subtraction();
+        break;
+
+    case 3:
+        system("CLS");
+        loaderScreen();
+        //Multiplication();
+        break;
+
+    case 4:
+        system("CLS");
+        loaderScreen();
+        //Pheasant_Multiplication();
+        break;
+
+    case 5:
+        system("CLS");
+        loaderScreen();
+        //intDivision();
+        break;
+
+    case 6:
+        system("CLS");
+        loaderScreen();
+        //LongDivision();
+        break;
+
+    case 7:
+        system("CLS");
+        loaderScreen();
+        //Power();
+        break;
+    default:
+
+        MessageBox(0,"NASA should DEFINITELY consider hiring you with this ASTONISHING level of ingenuity : | ", "Invalid Input", true);
+        mainPage();
+        break;
+    }
+}
+
+
 int main() {
+    /*
     load_movies();
     load_rating_mat();
     calc_similarity();
-    vector<int> topN = topNSimilarities(1, 2);
-    cout << topN[0] << " " << topN[1] << endl;
-
-
+    vector<int> topN = topNSimilarities(1, NUMBEROFNEIGHBOURS);
+    */
+    mainPage();
 
     system("PAUSE");
 }
@@ -143,11 +252,13 @@ void calc_similarity(){
         }
     }
 }
+
 bool sortbysec(const pair<int,float> &a, const pair<int,float> &b){
     return (a.second < b.second);
 }
+
 vector<int> topNSimilarities(int userID, int n){
-    vector<pair<int,float>> a;
+    vector<pair<int,float> > a;
     vector<int> u;
     for (int i = 0 ; i < USERS_LENGTH; i++){
         a.push_back(make_pair(i + 1, similarity_all[userID-1][i]));
@@ -157,4 +268,64 @@ vector<int> topNSimilarities(int userID, int n){
         u.push_back(a[USERS_LENGTH - i - 2].first);
     }
     return u;
+}
+
+int get_movie_index(int id){
+    for(int i = 0; i < movies.size(); i++){
+        if(movies[i].ID == id) return i;
+    }
+    return -1;
+}
+
+float prediction_value(int userID, int movieID, vector<int> neighbours){
+    float first = 0.0, second = 0.0;
+    bool flag = true;
+
+    for(int i=0; i<neighbours.size(); i++)
+        if(movies[get_movie_index(movieID)].rating[neighbours[i] - 1] != 0.0){
+            flag = false;
+        }
+
+
+    if (flag) return 0;
+
+    for(int i=0; i<neighbours.size(); i++){
+        int neighbourID = neighbours[i];
+        float similarity = similarity_all[userID - 1][neighbourID - 1];
+
+        first += movies[get_movie_index(movieID)].rating[neighbourID - 1] * similarity;
+        second += similarity;
+    }
+    float prediction_ = first / sqrt(second);
+    return prediction_;
+}
+
+// Step three of first phase
+vector<pair<int,float> > predict_nulls(int userID){
+    vector<pair<int,float> > r;
+    vector<int> topN = topNSimilarities(userID, NUMBEROFNEIGHBOURS);
+
+    for(int i = 0; i < movies.size() ;i++){
+        if(!movies[i].rating[userID - 1]){
+            r.push_back(make_pair(i,prediction_value(userID, i, topN)));
+        }
+    }
+    return r;
+}
+
+// Start of second Phase
+vector<int> prefer_movie(int userID, int topNMovies){
+    vector<pair<int,float> > p = predict_nulls(userID);
+    vector<int> moviesID;
+    if(p.size() == 0)
+    {
+        return vector<int>();
+    }
+    int n = topNMovies > p.size() ? p.size() : topNMovies;
+
+    sort(p.begin(), p.end(), sortbysec);
+    for (int i = 0 ; i < n; i++){
+        moviesID.push_back(p[p.size() - i - 1].first);
+    }
+    return moviesID;
 }
