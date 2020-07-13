@@ -11,7 +11,7 @@ using namespace std;
 #define MOVIES_LENGTH 60
 #define USERS_LENGTH 50
 
-float rating[USERS_LENGTH][MOVIES_LENGTH] = {};
+float rating[USERS_LENGTH][MOVIES_LENGTH] = { 0.0 };
 
 struct movie {
     int index;
@@ -30,6 +30,7 @@ void load_rating_mat();
 int main() {
     load_rating_mat();
     load_movies();
+
 }
 
 /**--**--**--**--**--**--**--**--**--**--**--**--**--**--**--**--**--**--**--**--**--**--**--**--**--**--**--**--**--**--**--**--**--**--**--**--**--**/
