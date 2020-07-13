@@ -47,27 +47,8 @@ float prediction_value(int, int, vector<int>);
 vector<pair<int,float> > predict_nulls(int);
 vector<int> prefer_movie(int, int);
 
-void loaderScreen();
 void mainPage();
 void check(int);
-
-
-void loaderScreen()
-{
-    char a=177,b=219;
-    //SetConsoleTitle("Loading");
-    HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
-    SetConsoleTextAttribute(hStdOut, 0x02);
-
-    cout << "\n\n\n\n\n\n\t\t\t\t\t\t\tLoading...\n";
-    cout << "\n\t\t\t\t\t";
-
-    for(int i=0;i<40;i++)
-    {
-        cout << b;
-        Sleep(20);
-    }
-}
 
 
 void mainPage(){
@@ -75,14 +56,16 @@ void mainPage(){
     HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
     SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN);
 
-    cout << "\n\tPlease choose your desired operation ;) ";
-    SetConsoleTextAttribute(hStdOut, FOREGROUND_BLUE | FOREGROUND_GREEN);
-    string s="\n\n\n\t\t1.\tDisplay movies\n\t\t2.\tDisplay ratings\n\t\t3.\tDisplay similarity between two users\n\t\t4.\tGenerate recommendations\n\t\t5.\tRate a movie\n\t\t6.\tAdd/Remove a movie\n\t\t7.\tExit\n\n\t--------------------------------------------------------------------------------\n\n\t\t\t";
-    for(int i=0;i<s.size();i++)
-    {
+    cout << "\n\t\t\tMOVIE RECOMMENDATION SYSTEM\n\n\t\t*********WELCOME TO THE MAIN MENU*********";
+    SetConsoleTextAttribute(hStdOut, FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_RED);
+    string s="\n\n\n\t\t1. Display movies\n\t\t2. Display ratings\n\t\t3. Display similarity between two users\n\t\t4. Generate recommendations\n\t\t5. Rate a movie\n\t\t6. Add/Remove a movie\n\t\t7. Exit\n\n\t\tEnter your choice: ";
+
+    for(int i=0;i<s.size();i++){
         cout << s.at(i);
         Sleep(2);
     }
+    SetConsoleTextAttribute(hStdOut, FOREGROUND_GREEN | FOREGROUND_GREEN);
+
     int a=0;
     cin >> a;
     check(a);
@@ -95,48 +78,45 @@ void check(int a)
     {
     case 1:
         system("CLS");
-        loaderScreen();
         //Addition();
         break;
 
     case 2:
         system("CLS");
-        loaderScreen();
         //Subtraction();
         break;
 
     case 3:
         system("CLS");
-        loaderScreen();
         //Multiplication();
         break;
 
     case 4:
         system("CLS");
-        loaderScreen();
         //Pheasant_Multiplication();
         break;
 
     case 5:
         system("CLS");
-        loaderScreen();
         //intDivision();
         break;
 
     case 6:
         system("CLS");
-        loaderScreen();
         //LongDivision();
         break;
 
     case 7:
         system("CLS");
-        loaderScreen();
         //Power();
         break;
     default:
 
-        MessageBox(0,"NASA should DEFINITELY consider hiring you with this ASTONISHING level of ingenuity : | ", "Invalid Input", true);
+        HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+        SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_RED);
+
+        cout << "\n\t\tThis option is invalid. Try again: ";
+        Sleep(2000);
         mainPage();
         break;
     }
