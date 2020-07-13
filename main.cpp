@@ -4,8 +4,8 @@
 #include <vector>
 #include <iostream>
 #include <cstdlib>
-#include <assert.h>
 #include <cmath>
+#include <algorithm>
 
 using namespace std;
 
@@ -31,16 +31,19 @@ movie processor(vector<string>);
 void load_movies();
 void load_rating_mat();
 void calc_similarity();
+vector<int> topNSimilarities(int, int);
 float similarity(int, int);
 
 int main() {
     load_movies();
     load_rating_mat();
     calc_similarity();
+    vector<int> topN = topNSimilarities(1, 2);
+    cout << topN[0] << " " << topN[1] << endl;
 
-    for(int i=0;i<50;i++){
-        cout << similarity_all[i][i] << "\n";
-    }
+
+
+    system("PAUSE");
 }
 
 /*------------------------------------------------------------------------------------------------------------------------------*/
@@ -64,7 +67,16 @@ movie moviesProcessor(vector<string> details){
 
     return temp;
 }
-
+void update_movies_files(vector<movie> movies)
+{
+    ofstream ofile("Movies.txt");
+    for(int i = 0; i < movies.size(); i++)
+    {
+        ofile<<movies[i].ID<<'\t'<<movies[i].name<<'\t'<<movies[i].year<<'\t';
+        ofile<<movies[i].yearDetail<<'\t'<<movies[i].link<<'\t'<<movies[i].genre;
+        ofile<<(i == movies.size() - 1 ? '\0' : '\n');
+    }
+}
 void load_movies(){
     ifstream file("Movies.txt");
     string line;
@@ -127,7 +139,22 @@ float similarity(int userID0, int userID1){
 void calc_similarity(){
     for(int user0 = 1; user0 < USERS_LENGTH + 1; user0++){
         for(int user1 = 1; user1 < USERS_LENGTH + 1; user1++){
-            similarity_all[user0-1][user1-1] = similarity(user0, user1);
+            similarity_all[user0 -1][user1-1] = similarity(user0, user1);
         }
     }
+}
+bool sortbysec(const pair<int,float> &a, const pair<int,float> &b){
+    return (a.second < b.second);
+}
+vector<int> topNSimilarities(int userID, int n){
+    vector<pair<int,float>> a;
+    vector<int> u;
+    for (int i = 0 ; i < USERS_LENGTH; i++){
+        a.push_back(make_pair(i + 1, similarity_all[userID-1][i]));
+    }
+    sort(a.begin(), a.end(), sortbysec);
+    for (int i = 0 ; i < n ; i++){
+        u.push_back(a[USERS_LENGTH - i - 2].first);
+    }
+    return u;
 }
