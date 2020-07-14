@@ -23,7 +23,6 @@ using namespace std;
 #define TOPNMOVIES 1
 
 float similarity_all[USERS_LENGTH][USERS_LENGTH];
-float similarity_all_duplicate[USERS_LENGTH][USERS_LENGTH];
 
 struct movie {
     int ID;
@@ -51,7 +50,7 @@ int string_to_int(string);
 
 
 void mainPage();
-void check(int);
+void check(char);
 void displayMovies();
 
 
@@ -70,9 +69,8 @@ void mainPage(){
     }
     SetConsoleTextAttribute(hStdOut, FOREGROUND_GREEN | FOREGROUND_GREEN);
 
-    int a=0;
-    cin >> a;
-    check(a);
+    char character = getch();
+    check(character);
     exit(0);
 }
 
@@ -119,83 +117,135 @@ void displayRating()
     cout << "\t\tDisplay Movies\n";
     cout << "\t-----------------------------\n\n";
 
-    cout << "\tEnter user ID: ";
 
+    cout << "\tEnter user ID: ";
     string userID = "";
+    int userID_int = 0;
     while(1) {
         SetConsoleTextAttribute(hStdOut, FOREGROUND_GREEN);
         getline(cin, userID);
-
-        int userID_int = string_to_int(userID);
-        if(userID_int <= 50 && userID_int >= 1 ){
-            SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
-            cout << "\tMovie id\tRating\n";
-            cout << "\t--------\t------\n";
-            for(int i=0;i<MOVIES_LENGTH;i++){
-                float rating = movies[i].rating[userID_int - 1];
-                if(rating){
-                    cout << "\t" << movies[i].ID << "\t\t" << rating << endl;
-                }
-            }
-            cout << "\tPress 'r' to retry, 'm' to Main menu, and 'q' to Quit\n\t";
-            char c;
-            c = getch();
-            if(c == 'm') mainPage();
-            else if(c == 'q') exit(0);
-            else if(c == 'r') displayRating();
-        }
+        userID_int = string_to_int(userID);
+        if(userID_int <= 50 && userID_int >= 1 ) break;
         else {
             SetConsoleTextAttribute(hStdOut, FOREGROUND_RED);
             cout << "\tThe user id does not exist. Try again: ";
         }
     }
+
+    SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+    cout << "\tMovie id\tRating\n";
+    cout << "\t--------\t------\n";
+    for(int i=0;i<MOVIES_LENGTH;i++){
+        float rating = movies[i].rating[userID_int - 1];
+        if(rating)
+            cout << "\t" << movies[i].ID << "\t\t" << rating << endl;
+    }
+
+    while(1) {
+        cout << "\tPress 'r' to retry, 'm' to Main menu, and 'q' to Quit\n";
+        char c;
+        c = getch();
+        if(c == 'm') mainPage();
+        else if(c == 'q') exit(0);
+        else if(c == 'r') displayRating();
+    }
 }
 
-void check(int a)
+void displaySimilarity()
+{
+    system("CLS");
+    fflush(stdout);
+    HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+    cout << "\t-----------------------------\n";
+    cout << "\t\tDisplay similarity between two users\n";
+    cout << "\t-----------------------------\n\n";
+
+    int userID1_int = 0, userID2_int = 0;
+    SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+    cout << "\tEnter first user ID: ";
+    string userID1 = "";
+    while(1) {
+        SetConsoleTextAttribute(hStdOut, FOREGROUND_GREEN);
+        getline(cin, userID1);
+        userID1_int = string_to_int(userID1);
+        if(userID1_int <= 50 && userID1_int >= 1 ) break;
+        else {
+            SetConsoleTextAttribute(hStdOut, FOREGROUND_RED);
+            cout << "\tThe user id does not exist. Try again: ";
+        }
+    }
+    SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+    cout << "\tEnter second user ID: ";
+    string userID2 = "";
+    while(1) {
+        SetConsoleTextAttribute(hStdOut, FOREGROUND_GREEN);
+        getline(cin, userID2);
+        userID2_int = string_to_int(userID2);
+        if(userID2_int <= 50 && userID2_int >= 1 ) break;
+        else {
+            SetConsoleTextAttribute(hStdOut, FOREGROUND_RED);
+            cout << "\tThe user id does not exist. Try again: ";
+        }
+    }
+    SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+    cout << "\tSimilarity between user " << userID1_int << " and " << userID2_int << " is: ";
+    cout << similarity_all[userID1_int - 1][userID2_int - 1] << endl << endl;
+    while(1) {
+        cout << "\tPress 'r' to retry, 'm' to Main menu, and 'q' to Quit\n";
+        char c;
+        c = getch();
+        if(c == 'm') mainPage();
+        else if(c == 'q') exit(0);
+        else if(c == 'r') displaySimilarity();
+    }
+}
+
+void check(char a)
 {
     switch(a)
     {
-    case 1:
+    case '1':
         system("CLS");
         displayMovies();
         break;
 
-    case 2:
+    case '2':
         system("CLS");
         displayRating();
         break;
 
-    case 3:
+    case '3':
         system("CLS");
-        //Multiplication();
+        displaySimilarity();
         break;
 
-    case 4:
+    case '4':
         system("CLS");
         //Pheasant_Multiplication();
         break;
 
-    case 5:
+    case '5':
         system("CLS");
         //intDivision();
         break;
 
-    case 6:
+    case '6':
         system("CLS");
         //LongDivision();
         break;
 
-    case 7:
+    case '7':
         exit(0);
         break;
     default:
 
         HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
-        SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_RED);
+        SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN);
 
         cout << "\n\t\tThis option is invalid. Try again: ";
-        Sleep(2000);
-        mainPage();
+        char character = getch();
+        check(character);
         break;
     }
 }
@@ -208,8 +258,7 @@ int main() {
     /*
     vector<int> topN = topNSimilarities(1, NUMBEROFNEIGHBOURS);
     */
-    //mainPage();
-    displayRating();
+    mainPage();
 
     system("PAUSE");
 }
