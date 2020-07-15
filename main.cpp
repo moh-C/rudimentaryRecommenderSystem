@@ -41,10 +41,15 @@ void displayRating();
 void displaySimilarity();
 void generateRecommendation();
 void displayRateMovie();
+void addRemoveMovie();
 void check(char);
 void recommendationPrinter(vector<int>, vector<int>, int);
 void recommendationPrinterAll(vector<int>, vector<int>, int);
 void recommendationPrintOptions();
+void addRemovePrintOptions();
+void addNewMovieDisplay();
+void removeMovieDisplay();
+void addRecordByName(string, string);
 
 // Prototypes for display
 movie processor(vector<string>);
@@ -61,6 +66,8 @@ vector<pair<int,float> > predict_nulls(int);
 vector<int> prefer_movie(int, int);
 
 int get_movie_index(int id);
+int get_movieID_by_name(string);
+void remove_movie(int);
 int string_to_int(string);
 string float_to_str(float);
 string helper(int, const string&);
@@ -71,6 +78,7 @@ int main() {
     load_movies();
     load_rating_mat();
     calc_similarity();
+
     mainPage();
 
     system("PAUSE");
@@ -97,8 +105,7 @@ void mainPage(){
     exit(0);
 }
 
-void displayMovies()
-{
+void displayMovies() {
     system("CLS");
     fflush(stdout);
     HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -108,7 +115,7 @@ void displayMovies()
     cout << "\t-----------------------------\n\n";
     cout << "\tMovie id\tMovie name" << setw(50) << " Year\n";
     cout << "\t--------\t----------" << setw(50) << " ----\n";
-    for(int i=0; i < MOVIES_LENGTH; i++){
+    for(int i=0; i < movies.size(); i++){
         cout << "\t" << movies[i].ID << "\t\t" << left << setw(50) << movies[i].name << "\t" << movies[i].year << "\n";
     }
 
@@ -285,7 +292,7 @@ void displayRateMovie() {
     cout << "\tRate a movie\n";
     cout << "\t-----------------------------\n";
 
-    cout << "\tEnter the Information Below:\n";
+    cout << "\n\n\tEnter the Information Below:\n";
     string userID = "",movieID = "", rating = "", choice = "";
     int userID_int = 0, movieID_int = 0, rating_int = 0;
     cout << "\t=============================\n";
@@ -309,6 +316,7 @@ void displayRateMovie() {
     cout << "\t=============================\n";
     cout << "\tDo you want to save (Y/N)? ";
     getline(cin, choice);
+
     if(choice == "y" || choice == "Y"){
         if(userID_int > USERS_LENGTH || userID_int < 1 ){
             SetConsoleTextAttribute(hStdOut, FOREGROUND_RED);
@@ -325,21 +333,197 @@ void displayRateMovie() {
             cout << "\n\tThis rating is not valid. (only between 1 to 5)\n\n\n";
             SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
         }
-        else
-        {
+        else {
             movies[get_movie_index(movieID_int)].rating[userID_int-1] = rating_int;
             update_ratings_file(movies);
             cout<< "\n\tThe record was successfully saved\n\n\n";
         }
-
     }
     while(1) {
         cout << "\tPress 'r' to retry, 'm' to Main menu, and 'q' to Quit\n\t";
         char c;
         c = getch();
         if(c == 'm') mainPage();
-        else if(c == 'q') exit(0);
         else if(c == 'r') displayRateMovie();
+        else if(c == 'q') exit(0);
+    }
+}
+
+void addRemoveMovie(){
+    system("CLS");
+    fflush(stdout);
+    HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+    cout << "\t-----------------------------\n";
+    cout << "\tAdd/Remove a movie\n";
+    cout << "\t-----------------------------\n";
+
+    addRemovePrintOptions();
+
+    string choice = "";
+    while(1) {
+        SetConsoleTextAttribute(hStdOut, FOREGROUND_GREEN);
+        getline(cin, choice);
+        if(choice == "a"){
+            // Add a new movie
+            addNewMovieDisplay();
+        } else if(choice == "b"){
+            // Remove a movie
+            removeMovieDisplay();
+        } else if(choice == "c"){
+            mainPage();
+        } else if(choice == "d"){
+            SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+            exit(0);
+        } else {
+            SetConsoleTextAttribute(hStdOut, FOREGROUND_RED);
+            cout << "\tInvalid option. Please try again: ";
+        }
+    }
+}
+
+void addNewMovieDisplay(){
+    while(1) {
+        system("CLS");
+        fflush(stdout);
+        HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+        SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+        cout << "\t-----------------------------\n";
+        cout << "\tAdd a new movie\n";
+        cout << "\t-----------------------------\n";
+        cout << "\n\tEnter the information below\n";
+        cout << "\t=============================\n";
+
+        string name = "", choice = "", year = "";
+        cout << "\n\tName: ";
+        SetConsoleTextAttribute(hStdOut, FOREGROUND_GREEN);
+        getline(cin, name);
+        SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+        cout << "\n\tYear: ";
+        SetConsoleTextAttribute(hStdOut, FOREGROUND_GREEN);
+        getline(cin, year);
+        SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+
+        string save = "";
+        cout << "\tDo you want to save (Y/N)? ";
+        SetConsoleTextAttribute(hStdOut, FOREGROUND_GREEN);
+        getline(cin, save);
+
+        if(save == "y" || save == "Y"){
+            if(get_movieID_by_name(name) != -1) {
+                SetConsoleTextAttribute(hStdOut, FOREGROUND_RED);
+                cout<<"\tThe record already exists.\n";
+                SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+            }
+            else {
+                SetConsoleTextAttribute(hStdOut, FOREGROUND_GREEN);
+                addRecordByName(name, year);
+                cout<<"\tThe record was saved successfully.\n";
+                SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+            }
+        }
+
+        cout << "\n\tPress 'r' to retry,'p' to Previous, 'm' to Main menu, and 'q' to Quit\n\t";
+        char c;
+        c = getch();
+        if(c == 'm') mainPage();
+        else if(c == 'q') exit(0);
+        else if(c == 'r') addNewMovieDisplay();
+        else if(c == 'p') addRemoveMovie();
+    }
+}
+
+void addRecordByName(string name, string year){
+    movie newMovie;
+    newMovie.genre = "null";
+    newMovie.link = "null";
+    newMovie.year = string_to_int(year);
+    newMovie.name = name;
+    newMovie.ID = movies[movies.size() - 1].ID + 1;
+    for(int i=0; i < 50 ;i++)
+        newMovie.rating[i] = 0.0f;
+    newMovie.yearDetail = "null";
+
+    movies.push_back(newMovie);
+    update_movies_file(movies);
+    movies.clear();
+    load_movies();
+}
+
+void removeMovieDisplay(){
+    while(1) {
+        system("CLS");
+        fflush(stdout);
+        HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+        SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+        cout << "\t-----------------------------\n";
+        cout << "\tRemove a new movie\n\n";
+        cout << "\t-----------------------------\n";
+        cout << "\t====Remove by name or ID?====\n";
+        cout << "\ta. By name\n";
+        cout << "\tb. By ID\n";
+        cout << "\tYour choice: ";
+        SetConsoleTextAttribute(hStdOut, FOREGROUND_GREEN);
+        char character = getch();
+        SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+        if(character == 'a'){
+            string movie_name = "",choice = "";
+            cout<<"\n\tEnter the name of movie: ";
+            SetConsoleTextAttribute(hStdOut, FOREGROUND_GREEN);
+            getline(cin, movie_name);
+            SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+            cout<<"\n\tAre you sure you want to delete \""<<movie_name<<"\"(Y/N) ?";
+            SetConsoleTextAttribute(hStdOut, FOREGROUND_GREEN);
+            getline(cin, choice);
+            SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+            if(get_movieID_by_name(movie_name) != -1)
+            {
+                cout<<"\tThe record was successfully removed.\n";
+                remove_movie(get_movieID_by_name(movie_name));
+            }
+            else
+            {
+                SetConsoleTextAttribute(hStdOut, FOREGROUND_RED);
+                cout<<"\tThe movie does not exist.\n";
+
+                SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+            }
+        }
+        else if(character == 'b'){
+            string movieID = "",choice = "";
+            int movieID_int = 0;
+            cout<<"\n\tEnter movie ID: ";
+            SetConsoleTextAttribute(hStdOut, FOREGROUND_GREEN);
+            getline(cin, movieID);
+            movieID_int = string_to_int(movieID);
+            SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+            cout<<"\n\tAre you sure you want to delete \"movie "<<movieID_int<<"\"(Y/N) ?";
+            SetConsoleTextAttribute(hStdOut, FOREGROUND_GREEN);
+            getline(cin, choice);
+            SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+            if(get_movie_index(movieID_int) != -1)
+            {
+                cout<<"\tThe record was successfully removed.\n";
+                remove_movie(movieID_int);
+            }
+            else
+            {
+                SetConsoleTextAttribute(hStdOut, FOREGROUND_RED);
+                cout<<"\tThe movie does not exist.\n\n";
+
+                SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+            }
+        }
+        else{
+            continue;
+        }
+        cout << "\tPress 'r' to retry,'p' to Previous, 'm' to Main menu, and 'q' to Quit\n";
+        char c;
+        c = getch();
+        if(c == 'm') mainPage();
+        else if(c == 'q') exit(0);
+        else if(c == 'r') removeMovieDisplay();
+        else if(c == 'p') addRemoveMovie();
     }
 }
 
@@ -373,7 +557,7 @@ void check(char a) {
 
     case '6':
         system("CLS");
-        //LongDivision();
+        addRemoveMovie();
         break;
 
     case '7':
@@ -449,6 +633,26 @@ void recommendationPrintOptions(){
     cout << "\tc. Back to main menu" << endl;
     cout << "\td. Exit" << endl;
     cout << "\n\tYour Choice: ";
+}
+
+void addRemovePrintOptions(){
+    HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    SetConsoleTextAttribute(hStdOut, 0x09);
+    cout << "\n\n\t====What do you want to do?====\n";
+    SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+
+    cout << "\ta. Add a new movie" << endl;
+    cout << "\tb. Remove a movie" << endl;
+    cout << "\tc. Back to main menu" << endl;
+    cout << "\td. Exit" << endl;
+    cout << "\n\tYour Choice: ";
+}
+
+int get_movieID_by_name(string movie_name) {
+    for(size_t i = 0; i < movies.size(); i++)
+        if(movies[i].name == movie_name)
+            return movies[i].ID;
+    return -1;
 }
 
 /*------------------------------------------------------------------------------------------------------------------------------*/
