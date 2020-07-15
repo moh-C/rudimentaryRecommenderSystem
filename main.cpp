@@ -115,7 +115,7 @@ void displayMovies() {
     cout << "\t-----------------------------\n\n";
     cout << "\tMovie id\tMovie name" << setw(50) << " Year\n";
     cout << "\t--------\t----------" << setw(50) << " ----\n";
-    for(int i=0; i < movies.size(); i++){
+    for(size_t i=0; i < movies.size(); i++){
         cout << "\t" << movies[i].ID << "\t\t" << left << setw(50) << movies[i].name << "\t" << movies[i].year << "\n";
     }
 
@@ -165,7 +165,7 @@ void displayRating() {
     SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
     cout << "\tMovie id\tRating\n";
     cout << "\t--------\t------\n";
-    for(int i=0;i<MOVIES_LENGTH;i++){
+    for(size_t i = 0; i < movies.size(); i++){
         float rating = movies[i].rating[userID_int - 1];
         if(rating)
             cout << "\t" << movies[i].ID << "\t\t" << rating << endl;
@@ -433,23 +433,6 @@ void addNewMovieDisplay(){
     }
 }
 
-void addRecordByName(string name, string year){
-    movie newMovie;
-    newMovie.genre = "null";
-    newMovie.link = "null";
-    newMovie.year = string_to_int(year);
-    newMovie.name = name;
-    newMovie.ID = movies[movies.size() - 1].ID + 1;
-    for(int i=0; i < 50 ;i++)
-        newMovie.rating[i] = 0.0f;
-    newMovie.yearDetail = "null";
-
-    movies.push_back(newMovie);
-    update_movies_file(movies);
-    movies.clear();
-    load_movies();
-}
-
 void removeMovieDisplay(){
     while(1) {
         system("CLS");
@@ -653,6 +636,21 @@ int get_movieID_by_name(string movie_name) {
         if(movies[i].name == movie_name)
             return movies[i].ID;
     return -1;
+}
+
+void addRecordByName(string name, string year){
+    movie newMovie;
+    newMovie.genre = "null";
+    newMovie.link = "null";
+    newMovie.year = string_to_int(year);
+    newMovie.name = name;
+    newMovie.ID = movies[movies.size() - 1].ID + 1;
+    for(int i=0; i < 50 ;i++)
+        newMovie.rating[i] = 0.0f;
+    newMovie.yearDetail = "null";
+
+    movies.push_back(newMovie);
+    update_movies_file(movies);
 }
 
 /*------------------------------------------------------------------------------------------------------------------------------*/
