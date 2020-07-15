@@ -40,12 +40,17 @@ movie processor(vector<string>);
 void load_movies();
 void load_rating_mat();
 void calc_similarity();
+void update_movies_file(vector<movie> movies);
+void update_ratings_files(vector<movie> movies);
+
+
 vector<int> topNSimilarities(int, int);
 float similarity(int, int);
 float prediction_value(int, int, vector<int>);
 vector<pair<int,float> > predict_nulls(int);
 vector<int> prefer_movie(int, int);
 
+int get_movie_index(int id);
 int string_to_int(string);
 string float_to_str(float);
 string helper(int, const string&);
@@ -74,8 +79,6 @@ void mainPage(){
 
     char character = getch();
     check(character);
-
-    SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
     exit(0);
 }
 
@@ -130,7 +133,7 @@ void displayRating()
         SetConsoleTextAttribute(hStdOut, FOREGROUND_GREEN);
         getline(cin, userID);
         userID_int = string_to_int(userID);
-        if(userID_int <= 50 && userID_int >= 1 ) break;
+        if(userID_int <= USERS_LENGTH && userID_int >= 1 ) break;
         else {
             SetConsoleTextAttribute(hStdOut, FOREGROUND_RED);
             cout << "\tThe user id does not exist. Try again: ";
@@ -155,7 +158,73 @@ void displayRating()
         else if(c == 'r') displayRating();
     }
 }
+void displayRateMovie()
+{
+    system("CLS");
+    fflush(stdout);
+    HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+    cout << "\t-----------------------------\n";
+    cout << "\tRate a movie\n";
+    cout << "\t-----------------------------\n";
 
+    cout << "\tEnter the Information Below:\n";
+    string userID = "",movieID = "", rating = "", choice = "";
+    int userID_int = 0, movieID_int = 0, rating_int = 0;
+    cout << "\t=============================\n";
+
+    cout << "\tUser ID: ";
+    SetConsoleTextAttribute(hStdOut, FOREGROUND_GREEN);
+    getline(cin, userID);
+    userID_int = string_to_int(userID);
+    SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+    cout << "\tMovie ID: ";
+    SetConsoleTextAttribute(hStdOut, FOREGROUND_GREEN);
+    getline(cin, movieID);
+    movieID_int = string_to_int(movieID);
+    SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+    cout << "\tRating (1-5): ";
+    SetConsoleTextAttribute(hStdOut, FOREGROUND_GREEN);
+    getline(cin, rating);
+    rating_int = string_to_int(rating);
+    SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+
+    cout << "\t=============================\n";
+    cout << "\tDo you want to save (Y/N)? ";
+    getline(cin, choice);
+    if(choice == "y" || choice == "Y"){
+        if(userID_int > USERS_LENGTH || userID_int < 1 ){
+            SetConsoleTextAttribute(hStdOut, FOREGROUND_RED);
+            cout << "\n\tThis user id does not exist.\n\n\n";
+            SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+        }
+        else if(get_movie_index(movieID_int) == -1){
+            SetConsoleTextAttribute(hStdOut, FOREGROUND_RED);
+            cout << "\n\tThis movie id does not exist.\n\n\n";
+            SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+        }
+        else if(rating_int > 5 || rating_int < 1){
+            SetConsoleTextAttribute(hStdOut, FOREGROUND_RED);
+            cout << "\n\tThis rating is not valid. (only between 1 to 5)\n\n\n";
+            SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+        }
+        else
+        {
+            movies[get_movie_index(movieID_int)].rating[userID_int-1] = rating_int;
+            update_ratings_files(movies);
+            cout<< "\n\tThe record was successfully saved\n\n\n";
+        }
+
+    }
+    while(1) {
+        cout << "\tPress 'r' to retry, 'm' to Main menu, and 'q' to Quit\n\t";
+        char c;
+        c = getch();
+        if(c == 'm') mainPage();
+        else if(c == 'q') exit(0);
+        else if(c == 'r') displayRateMovie();
+    }
+}
 void displaySimilarity()
 {
     system("CLS");
@@ -252,19 +321,6 @@ void recommendationPrinterAll(vector<int> nMovies, vector<int> neighbours, int u
     }
 }
 
-void recommendationPrintOptions(){
-    HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
-    SetConsoleTextAttribute(hStdOut, 0x09);
-    cout << "\n\n\t====What do you want to do?====\n";
-    SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
-
-    cout << "\ta. Display all predictions for this user" << endl;
-    cout << "\tb. Retry" << endl;
-    cout << "\tc. Back to main menu" << endl;
-    cout << "\td. Exit" << endl;
-    cout << "\n\tYour Choice: ";
-}
-
 void generateRecommendation(){
     system("CLS");
     fflush(stdout);
@@ -295,26 +351,38 @@ void generateRecommendation(){
     // Top three recommendations
     recommendationPrinter(nMovies, neighbours, userID_int);
 
-    recommendationPrintOptions();
-
-    string choice = "";
     while(1) {
+        SetConsoleTextAttribute(hStdOut, 0x09);
+        cout << "\n\n\t====What do you want to do?====\n";
+        SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+
+        cout << "\ta. Display all predictions for this user" << endl;
+        cout << "\tb. Retry" << endl;
+        cout << "\tc. Back to main menu" << endl;
+        cout << "\td. Exit" << endl;
+        cout << "\n\tYour Choice: ";
         SetConsoleTextAttribute(hStdOut, FOREGROUND_GREEN);
-        getline(cin, choice);
-        if(choice == "a"){
+        char choice;
+        choice = getch();
+        SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+        switch (choice) {
+        case 'a':
+            // All of the recommendations
             recommendationPrinterAll(nMovies, neighbours, userID_int);
-            recommendationPrintOptions();
-        } else if(choice == "b"){
+            break;
+        case 'b':
             generateRecommendation();
-        } else if(choice == "c"){
+            break;
+        case 'c':
             mainPage();
-        } else if(choice == "d"){
-            SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+            break;
+        case 'd':
             exit(0);
-        } else {
-            SetConsoleTextAttribute(hStdOut, FOREGROUND_RED);
-            cout << "\tInvalid option. Please try again: ";
+            break;
+        default:
+            break;
         }
+        cout << endl;
     }
 }
 
@@ -344,7 +412,7 @@ void check(char a)
 
     case '5':
         system("CLS");
-        //intDivision();
+        displayRateMovie();
         break;
 
     case '6':
@@ -372,9 +440,7 @@ int main() {
     load_movies();
     load_rating_mat();
     calc_similarity();
-    /*
-    vector<int> topN = topNSimilarities(1, NUMBEROFNEIGHBOURS);
-    */
+
     mainPage();
 
     system("PAUSE");
@@ -419,6 +485,7 @@ movie moviesProcessor(vector<string> details){
 
     return temp;
 }
+
 void update_movies_files(vector<movie> movies)
 {
     ofstream ofile("Movies.txt");
@@ -426,10 +493,32 @@ void update_movies_files(vector<movie> movies)
     {
         ofile<<movies[i].ID<<'\t'<<movies[i].name<<'\t'<<movies[i].year<<'\t';
         ofile<<movies[i].yearDetail<<'\t'<<movies[i].link<<'\t'<<movies[i].genre;
-        ofile<<(i == movies.size() - 1 ? '\0' : '\n');
+        if(i != movies.size() - 1){
+            ofile<<endl;
+        }
     }
 }
 
+void update_ratings_files(vector<movie> movies){
+    ofstream ofile("Ratings.txt");
+    for(int i = 0; i < USERS_LENGTH; i++)
+    {
+        for(int j = 0; j < movies.size(); j++)
+        {
+            if(static_cast<int>(movies[j].rating[i]) != 0){
+                ofile<<(i+1)<<'\t'<<movies[j].ID<<'\t'<<static_cast<int>(movies[j].rating[i]);
+                if(j != movies.size() - 1 || i != USERS_LENGTH - 1){
+                    ofile<<endl;
+                }
+            }
+        }
+    }
+}
+void remove_movie(int movieID)
+{
+    int movie_index = get_movie_index(movieID);
+    movies.erase(movies.begin() + movie_index);
+}
 void load_movies(){
     ifstream file("Movies.txt");
     string line;
@@ -529,7 +618,6 @@ float prediction_value(int userID, int movie_index, vector<int> neighbours){
         if(movies[movie_index].rating[neighbours[i] - 1] != 0.0){
             flag = false;
         }
-
 
     if (flag) return 0;
 
