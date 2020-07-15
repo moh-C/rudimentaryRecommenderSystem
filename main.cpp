@@ -540,7 +540,7 @@ float prediction_value(int userID, int movie_index, vector<int> neighbours){
         first += movies[movie_index].rating[neighbourID - 1] * similarity;
         second += similarity;
     }
-    float prediction_ = first / sqrt(second);
+    float prediction_ = first / second;
     return prediction_;
 }
 
