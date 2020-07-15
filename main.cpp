@@ -19,7 +19,7 @@ using namespace std;
 
 #define MOVIES_LENGTH 60
 #define USERS_LENGTH 50
-#define NUMBEROFNEIGHBOURS 1
+#define NUMBEROFNEIGHBOURS 8
 #define TOPNMOVIES 1
 
 float similarity_all[USERS_LENGTH][USERS_LENGTH];
@@ -47,7 +47,10 @@ vector<pair<int,float> > predict_nulls(int);
 vector<int> prefer_movie(int, int);
 
 int string_to_int(string);
-
+string float_to_str(float);
+string helper(int, const string&);
+void recommendationPrinter(vector<int>, vector<int>, int);
+void recommendationPrinterAll(vector<int>, vector<int>, int);
 
 void mainPage();
 void check(char);
@@ -81,7 +84,7 @@ void displayMovies()
     HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
     SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
     cout << "\t-----------------------------\n";
-    cout << "\t\tDisplay Movies\n";
+    cout << "\tDisplay Movies\n";
     cout << "\t-----------------------------\n\n";
     cout << "\tMovie id\tMovie name" << setw(50) << " Year\n";
     cout << "\t--------\t----------" << setw(50) << " ----\n";
@@ -114,7 +117,7 @@ void displayRating()
     HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
     SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
     cout << "\t-----------------------------\n";
-    cout << "\t\tDisplay Movies\n";
+    cout << "\tDisplay Movies\n";
     cout << "\t-----------------------------\n\n";
 
 
@@ -158,7 +161,7 @@ void displaySimilarity()
     HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
     SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
     cout << "\t-----------------------------\n";
-    cout << "\t\tDisplay similarity between two users\n";
+    cout << "\tDisplay similarity between two users\n";
     cout << "\t-----------------------------\n\n";
 
     int userID1_int = 0, userID2_int = 0;
@@ -201,6 +204,117 @@ void displaySimilarity()
     }
 }
 
+void recommendationPrinter(vector<int> nMovies, vector<int> neighbours, int userID_int){
+    int cnt = 3;
+    HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+
+    printf("\n\tTop-%d Recommendations for user %d are:\n\n", cnt, userID_int);
+
+    cout << left << setw(15) << "\tMovie ID" << left << setw(50) << "Movie name" << left << setw(10) << "Year" << left << setw(15) << "Predicted Rating\n";
+    cout << left << setw(15) << "\t--------" << left << setw(50) << "----------" << left << setw(10) << "----" << left << setw(15) << "----------------\n\t";
+
+    for(int i = 0; i < cnt; i++){
+        int movieID = nMovies[i];
+        float value = prediction_value(userID_int, movieID, neighbours);
+        float nearest = roundf(value * 100) / 100;
+
+        cout << left << setw(15) << movies[movieID].ID;
+        cout << left << setw(50) << movies[movieID].name;
+        cout << left << setw(10) << movies[movieID].year;
+        cout << left << helper(15, float_to_str(nearest));
+        cout << "\n\t";
+    }
+}
+
+void recommendationPrinterAll(vector<int> nMovies, vector<int> neighbours, int userID_int){
+    HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    SetConsoleTextAttribute(hStdOut, 0x09);
+    printf("\n\n\tPrediction of unseen movies by user %d: \n\n", userID_int);
+    SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+
+    cout << left << setw(15) << "\tMovie ID" << left << setw(15) << "Predicted Rating\n";
+    cout << left << setw(15) << "\t--------" << left << setw(15) << "----------------\n\t";
+
+    for(int i = 0; i < nMovies.size(); i++){
+        int movieID = nMovies[i];
+        float value = prediction_value(userID_int, movieID, neighbours);
+        float nearest = roundf(value * 100) / 100;
+
+        cout << left << setw(15) << movies[movieID].ID;
+        if(nearest == 0.0f) {
+            cout << left << "Not predictable";
+        }
+        else cout << left << helper(15, float_to_str(nearest));
+        cout << "\n\t";
+    }
+}
+
+void generateRecommendation(){
+    system("CLS");
+    fflush(stdout);
+    HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+    cout << "\t-----------------------------\n";
+    cout << "\tGenerate Recommendation\n";
+    cout << "\t-----------------------------\n\n";
+
+    int userID_int = 0;
+    SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+    cout << "\tEnter user ID: ";
+    string userID = "";
+    while(1) {
+        SetConsoleTextAttribute(hStdOut, FOREGROUND_GREEN);
+        getline(cin, userID);
+        userID_int = string_to_int(userID);
+        if(userID_int <= 50 && userID_int >= 1 ) break;
+        else {
+            SetConsoleTextAttribute(hStdOut, FOREGROUND_RED);
+            cout << "\tThe user id does not exist. Try again: ";
+        }
+    }
+
+    vector<int> nMovies = prefer_movie(userID_int, 60);
+    vector<int> neighbours = topNSimilarities(userID_int, NUMBEROFNEIGHBOURS);
+
+    // Top three recommendations
+    recommendationPrinter(nMovies, neighbours, userID_int);
+
+    while(1) {
+        SetConsoleTextAttribute(hStdOut, 0x09);
+        cout << "\n\n\t====What do you want to do?====\n";
+        SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+
+        cout << "\ta. Display all predictions for this user" << endl;
+        cout << "\tb. Retry" << endl;
+        cout << "\tc. Back to main menu" << endl;
+        cout << "\td. Exit" << endl;
+        cout << "\n\tYour Choice: ";
+        SetConsoleTextAttribute(hStdOut, FOREGROUND_GREEN);
+        char choice;
+        choice = getch();
+        SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+        switch (choice) {
+        case 'a':
+            // All of the recommendations
+            recommendationPrinterAll(nMovies, neighbours, userID_int);
+            break;
+        case 'b':
+            generateRecommendation();
+            break;
+        case 'c':
+            mainPage();
+            break;
+        case 'd':
+            exit(0);
+            break;
+        default:
+            break;
+        }
+        cout << endl;
+    }
+}
+
 void check(char a)
 {
     switch(a)
@@ -222,7 +336,7 @@ void check(char a)
 
     case '4':
         system("CLS");
-        //Pheasant_Multiplication();
+        generateRecommendation();
         break;
 
     case '5':
@@ -272,6 +386,13 @@ int string_to_int(string str) {
     stringstream stoi(s);
 
     stoi >> res;
+    return res;
+}
+
+string float_to_str(float val){
+    stringstream stream;
+    stream << val;
+    string res = stream.str();
     return res;
 }
 
@@ -397,12 +518,12 @@ int get_movie_index(int id){
     return -1;
 }
 
-float prediction_value(int userID, int movieID, vector<int> neighbours){
+float prediction_value(int userID, int movie_index, vector<int> neighbours){
     float first = 0.0, second = 0.0;
     bool flag = true;
 
     for(int i=0; i<neighbours.size(); i++)
-        if(movies[get_movie_index(movieID)].rating[neighbours[i] - 1] != 0.0){
+        if(movies[movie_index].rating[neighbours[i] - 1] != 0.0){
             flag = false;
         }
 
@@ -413,7 +534,7 @@ float prediction_value(int userID, int movieID, vector<int> neighbours){
         int neighbourID = neighbours[i];
         float similarity = similarity_all[userID - 1][neighbourID - 1];
 
-        first += movies[get_movie_index(movieID)].rating[neighbourID - 1] * similarity;
+        first += movies[movie_index].rating[neighbourID - 1] * similarity;
         second += similarity;
     }
     float prediction_ = first / sqrt(second);
@@ -437,8 +558,7 @@ vector<pair<int,float> > predict_nulls(int userID){
 vector<int> prefer_movie(int userID, int topNMovies){
     vector<pair<int,float> > p = predict_nulls(userID);
     vector<int> moviesID;
-    if(p.size() == 0)
-    {
+    if(p.size() == 0) {
         return vector<int>();
     }
     int n = topNMovies > p.size() ? p.size() : topNMovies;
@@ -448,4 +568,14 @@ vector<int> prefer_movie(int userID, int topNMovies){
         moviesID.push_back(p[p.size() - i - 1].first);
     }
     return moviesID;
+}
+
+string helper(int width, const string& str) {
+    int len = str.length();
+    if(width < len) { return str; }
+
+    int diff = width - len;
+    int pad1 = diff/2;
+    int pad2 = diff - pad1;
+    return string(pad1, ' ') + str + string(pad2, ' ');
 }
