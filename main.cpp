@@ -31,7 +31,7 @@ struct movie {
     string yearDetail;
     string link;
     string genre;
-    float rating[50] = { 0.0 };
+    float rating[50];
 };
 
 vector<movie> movies;
@@ -71,7 +71,7 @@ void mainPage(){
     SetConsoleTextAttribute(hStdOut, FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_RED);
     string s="\n\n\n\t\t1. Display movies\n\t\t2. Display ratings\n\t\t3. Display similarity between two users\n\t\t4. Generate recommendations\n\t\t5. Rate a movie\n\t\t6. Add/Remove a movie\n\t\t7. Exit\n\n\t\tEnter your choice: ";
 
-    for(int i=0;i<s.size();i++){
+    for(size_t i=0;i<s.size();i++){
         cout << s.at(i);
         Sleep(2);
     }
@@ -307,7 +307,7 @@ void recommendationPrinterAll(vector<int> nMovies, vector<int> neighbours, int u
     cout << left << setw(15) << "\tMovie ID" << left << setw(15) << "Predicted Rating\n";
     cout << left << setw(15) << "\t--------" << left << setw(15) << "----------------\n\t";
 
-    for(int i = 0; i < nMovies.size(); i++){
+    for(size_t i = 0; i < nMovies.size(); i++){
         int movieID = nMovies[i];
         float value = prediction_value(userID_int, movieID, neighbours);
         float nearest = roundf(value * 100) / 100;
@@ -489,7 +489,7 @@ movie moviesProcessor(vector<string> details){
 void update_movies_files(vector<movie> movies)
 {
     ofstream ofile("Movies.txt");
-    for(int i = 0; i < movies.size(); i++)
+    for(size_t  i = 0; i < movies.size(); i++)
     {
         ofile<<movies[i].ID<<'\t'<<movies[i].name<<'\t'<<movies[i].year<<'\t';
         ofile<<movies[i].yearDetail<<'\t'<<movies[i].link<<'\t'<<movies[i].genre;
@@ -503,7 +503,7 @@ void update_ratings_files(vector<movie> movies){
     ofstream ofile("Ratings.txt");
     for(int i = 0; i < USERS_LENGTH; i++)
     {
-        for(int j = 0; j < movies.size(); j++)
+        for(size_t j = 0; j < movies.size(); j++)
         {
             if(static_cast<int>(movies[j].rating[i]) != 0){
                 ofile<<(i+1)<<'\t'<<movies[j].ID<<'\t'<<static_cast<int>(movies[j].rating[i]);
@@ -532,6 +532,12 @@ void load_movies(){
             tokens.push_back(token);
         movies.push_back(moviesProcessor(tokens));
         tokens.clear();
+    }
+
+    for(int i=0; i < MOVIES_LENGTH; i++){
+        for(int j=0; j < USERS_LENGTH; j++){
+            movies[i].rating[j] = 0;
+        }
     }
 }
 
@@ -604,7 +610,7 @@ vector<int> topNSimilarities(int userID, int n){
 }
 
 int get_movie_index(int id){
-    for(int i = 0; i < movies.size(); i++){
+    for(size_t i = 0; i < movies.size(); i++){
         if(movies[i].ID == id) return i;
     }
     return -1;
@@ -614,14 +620,14 @@ float prediction_value(int userID, int movie_index, vector<int> neighbours){
     float first = 0.0, second = 0.0;
     bool flag = true;
 
-    for(int i=0; i<neighbours.size(); i++)
+    for(size_t i=0; i<neighbours.size(); i++)
         if(movies[movie_index].rating[neighbours[i] - 1] != 0.0){
             flag = false;
         }
 
     if (flag) return 0;
 
-    for(int i=0; i<neighbours.size(); i++){
+    for(size_t i=0; i<neighbours.size(); i++){
         int neighbourID = neighbours[i];
         float similarity = similarity_all[userID - 1][neighbourID - 1];
 
@@ -637,7 +643,7 @@ vector<pair<int,float> > predict_nulls(int userID){
     vector<pair<int,float> > r;
     vector<int> topN = topNSimilarities(userID, NUMBEROFNEIGHBOURS);
 
-    for(int i = 0; i < movies.size() ;i++){
+    for(size_t i = 0; i < movies.size() ;i++){
         if(!movies[i].rating[userID - 1]){
             r.push_back(make_pair(i,prediction_value(userID, i, topN)));
         }
@@ -652,10 +658,10 @@ vector<int> prefer_movie(int userID, int topNMovies){
     if(p.size() == 0) {
         return vector<int>();
     }
-    int n = topNMovies > p.size() ? p.size() : topNMovies;
+    size_t n = (size_t)topNMovies > p.size() ? p.size() : topNMovies;
 
     sort(p.begin(), p.end(), sortbysec);
-    for (int i = 0 ; i < n; i++){
+    for (size_t i = 0 ; i < n; i++){
         moviesID.push_back(p[p.size() - i - 1].first);
     }
     return moviesID;
