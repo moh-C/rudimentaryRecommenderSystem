@@ -74,6 +74,8 @@ void mainPage(){
 
     char character = getch();
     check(character);
+
+    SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
     exit(0);
 }
 
@@ -250,6 +252,19 @@ void recommendationPrinterAll(vector<int> nMovies, vector<int> neighbours, int u
     }
 }
 
+void recommendationPrintOptions(){
+    HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    SetConsoleTextAttribute(hStdOut, 0x09);
+    cout << "\n\n\t====What do you want to do?====\n";
+    SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+
+    cout << "\ta. Display all predictions for this user" << endl;
+    cout << "\tb. Retry" << endl;
+    cout << "\tc. Back to main menu" << endl;
+    cout << "\td. Exit" << endl;
+    cout << "\n\tYour Choice: ";
+}
+
 void generateRecommendation(){
     system("CLS");
     fflush(stdout);
@@ -280,38 +295,26 @@ void generateRecommendation(){
     // Top three recommendations
     recommendationPrinter(nMovies, neighbours, userID_int);
 
-    while(1) {
-        SetConsoleTextAttribute(hStdOut, 0x09);
-        cout << "\n\n\t====What do you want to do?====\n";
-        SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+    recommendationPrintOptions();
 
-        cout << "\ta. Display all predictions for this user" << endl;
-        cout << "\tb. Retry" << endl;
-        cout << "\tc. Back to main menu" << endl;
-        cout << "\td. Exit" << endl;
-        cout << "\n\tYour Choice: ";
+    string choice = "";
+    while(1) {
         SetConsoleTextAttribute(hStdOut, FOREGROUND_GREEN);
-        char choice;
-        choice = getch();
-        SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
-        switch (choice) {
-        case 'a':
-            // All of the recommendations
+        getline(cin, choice);
+        if(choice == "a"){
             recommendationPrinterAll(nMovies, neighbours, userID_int);
-            break;
-        case 'b':
+            recommendationPrintOptions();
+        } else if(choice == "b"){
             generateRecommendation();
-            break;
-        case 'c':
+        } else if(choice == "c"){
             mainPage();
-            break;
-        case 'd':
+        } else if(choice == "d"){
+            SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
             exit(0);
-            break;
-        default:
-            break;
+        } else {
+            SetConsoleTextAttribute(hStdOut, FOREGROUND_RED);
+            cout << "\tInvalid option. Please try again: ";
         }
-        cout << endl;
     }
 }
 
