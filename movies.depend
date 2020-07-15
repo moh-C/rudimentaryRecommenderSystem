@@ -9,21 +9,16 @@
 	<assert.h>
 	<cmath>
 
-1594806369 source:c:\users\moham\desktop\github\rudimentaryrecommendersystem\main.cpp
-	<sstream>
-	<fstream>
+1594810108 source:c:\users\moham\desktop\github\rudimentaryrecommendersystem\main.cpp
+	<iostream>
 	<string>
 	<vector>
-	<iostream>
-	<cstdlib>
+	<sstream>
+	<fstream>
 	<cmath>
 	<algorithm>
 	<windows.h>
 	<time.h>
 	<bits/stdc++.h>
-	<tgmath.h>
-	<stdlib.h>
-	<conio.h>
-	<tchar.h>
 	<conio.h>
 

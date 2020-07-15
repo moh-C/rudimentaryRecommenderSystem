@@ -1,18 +1,13 @@
-#include <sstream>
-#include <fstream>
+#include <iostream>
 #include <string>
 #include <vector>
-#include <iostream>
-#include <cstdlib>
+#include <sstream>
+#include <fstream>
 #include <cmath>
 #include <algorithm>
 #include <windows.h>
 #include <time.h>
 #include <bits/stdc++.h>
-#include <tgmath.h>
-#include <stdlib.h>
-#include <conio.h>
-#include <tchar.h>
 #include <conio.h>
 
 using namespace std;
@@ -22,8 +17,10 @@ using namespace std;
 #define NUMBEROFNEIGHBOURS 8
 #define TOPNMOVIES 1
 
+// Similarity of users
 float similarity_all[USERS_LENGTH][USERS_LENGTH];
 
+// Movies struct
 struct movie {
     int ID;
     string name;
@@ -34,15 +31,28 @@ struct movie {
     float rating[50];
 };
 
+// Vector of all movies
 vector<movie> movies;
 
+// Prototypes for display
+void mainPage();
+void displayMovies();
+void displayRating();
+void displaySimilarity();
+void generateRecommendation();
+void displayRateMovie();
+void check(char);
+void recommendationPrinter(vector<int>, vector<int>, int);
+void recommendationPrinterAll(vector<int>, vector<int>, int);
+void recommendationPrintOptions();
+
+// Prototypes for display
 movie processor(vector<string>);
 void load_movies();
 void load_rating_mat();
 void calc_similarity();
 void update_movies_file(vector<movie> movies);
-void update_ratings_files(vector<movie> movies);
-
+void update_ratings_file(vector<movie> movies);
 
 vector<int> topNSimilarities(int, int);
 float similarity(int, int);
@@ -54,14 +64,19 @@ int get_movie_index(int id);
 int string_to_int(string);
 string float_to_str(float);
 string helper(int, const string&);
-void recommendationPrinter(vector<int>, vector<int>, int);
-void recommendationPrinterAll(vector<int>, vector<int>, int);
-
-void mainPage();
-void check(char);
-void displayMovies();
 
 
+// Main function
+int main() {
+    load_movies();
+    load_rating_mat();
+    calc_similarity();
+    mainPage();
+
+    system("PAUSE");
+}
+
+/*-----------------------------------------------------------------------------------------------------------------------------*/
 void mainPage(){
     system("CLS");
     HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -115,8 +130,8 @@ void displayMovies()
     }
 }
 
-void displayRating()
-{
+
+void displayRating() {
     system("CLS");
     fflush(stdout);
     HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -158,8 +173,110 @@ void displayRating()
         else if(c == 'r') displayRating();
     }
 }
-void displayRateMovie()
-{
+
+void displaySimilarity() {
+    system("CLS");
+    fflush(stdout);
+    HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+    cout << "\t-----------------------------\n";
+    cout << "\tDisplay similarity between two users\n";
+    cout << "\t-----------------------------\n\n";
+
+    int userID1_int = 0, userID2_int = 0;
+    SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+    cout << "\tEnter first user ID: ";
+    string userID1 = "";
+    while(1) {
+        SetConsoleTextAttribute(hStdOut, FOREGROUND_GREEN);
+        getline(cin, userID1);
+        userID1_int = string_to_int(userID1);
+        if(userID1_int <= 50 && userID1_int >= 1 ) break;
+        else {
+            SetConsoleTextAttribute(hStdOut, FOREGROUND_RED);
+            cout << "\tThe user id does not exist. Try again: ";
+        }
+    }
+    SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+    cout << "\tEnter second user ID: ";
+    string userID2 = "";
+    while(1) {
+        SetConsoleTextAttribute(hStdOut, FOREGROUND_GREEN);
+        getline(cin, userID2);
+        userID2_int = string_to_int(userID2);
+        if(userID2_int <= 50 && userID2_int >= 1 ) break;
+        else {
+            SetConsoleTextAttribute(hStdOut, FOREGROUND_RED);
+            cout << "\tThe user id does not exist. Try again: ";
+        }
+    }
+    SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+    cout << "\tSimilarity between user " << userID1_int << " and " << userID2_int << " is: ";
+    cout << similarity_all[userID1_int - 1][userID2_int - 1] << endl << endl;
+    while(1) {
+        cout << "\tPress 'r' to retry, 'm' to Main menu, and 'q' to Quit\n";
+        char c;
+        c = getch();
+        if(c == 'm') mainPage();
+        else if(c == 'q') exit(0);
+        else if(c == 'r') displaySimilarity();
+    }
+}
+
+void generateRecommendation(){
+    system("CLS");
+    fflush(stdout);
+    HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+    cout << "\t-----------------------------\n";
+    cout << "\tGenerate Recommendation\n";
+    cout << "\t-----------------------------\n\n";
+
+    int userID_int = 0;
+    SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+    cout << "\tEnter user ID: ";
+    string userID = "";
+    while(1) {
+        SetConsoleTextAttribute(hStdOut, FOREGROUND_GREEN);
+        getline(cin, userID);
+        userID_int = string_to_int(userID);
+        if(userID_int <= 50 && userID_int >= 1 ) break;
+        else {
+            SetConsoleTextAttribute(hStdOut, FOREGROUND_RED);
+            cout << "\tThe user id does not exist. Try again: ";
+        }
+    }
+
+    vector<int> nMovies = prefer_movie(userID_int, 60);
+    vector<int> neighbours = topNSimilarities(userID_int, NUMBEROFNEIGHBOURS);
+
+    // Top three recommendations
+    recommendationPrinter(nMovies, neighbours, userID_int);
+
+    recommendationPrintOptions();
+
+    string choice = "";
+    while(1) {
+        SetConsoleTextAttribute(hStdOut, FOREGROUND_GREEN);
+        getline(cin, choice);
+        if(choice == "a"){
+            recommendationPrinterAll(nMovies, neighbours, userID_int);
+            recommendationPrintOptions();
+        } else if(choice == "b"){
+            generateRecommendation();
+        } else if(choice == "c"){
+            mainPage();
+        } else if(choice == "d"){
+            SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+            exit(0);
+        } else {
+            SetConsoleTextAttribute(hStdOut, FOREGROUND_RED);
+            cout << "\tInvalid option. Please try again: ";
+        }
+    }
+}
+
+void displayRateMovie() {
     system("CLS");
     fflush(stdout);
     HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -211,7 +328,7 @@ void displayRateMovie()
         else
         {
             movies[get_movie_index(movieID_int)].rating[userID_int-1] = rating_int;
-            update_ratings_files(movies);
+            update_ratings_file(movies);
             cout<< "\n\tThe record was successfully saved\n\n\n";
         }
 
@@ -225,169 +342,8 @@ void displayRateMovie()
         else if(c == 'r') displayRateMovie();
     }
 }
-void displaySimilarity()
-{
-    system("CLS");
-    fflush(stdout);
-    HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
-    SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
-    cout << "\t-----------------------------\n";
-    cout << "\tDisplay similarity between two users\n";
-    cout << "\t-----------------------------\n\n";
 
-    int userID1_int = 0, userID2_int = 0;
-    SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
-    cout << "\tEnter first user ID: ";
-    string userID1 = "";
-    while(1) {
-        SetConsoleTextAttribute(hStdOut, FOREGROUND_GREEN);
-        getline(cin, userID1);
-        userID1_int = string_to_int(userID1);
-        if(userID1_int <= 50 && userID1_int >= 1 ) break;
-        else {
-            SetConsoleTextAttribute(hStdOut, FOREGROUND_RED);
-            cout << "\tThe user id does not exist. Try again: ";
-        }
-    }
-    SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
-    cout << "\tEnter second user ID: ";
-    string userID2 = "";
-    while(1) {
-        SetConsoleTextAttribute(hStdOut, FOREGROUND_GREEN);
-        getline(cin, userID2);
-        userID2_int = string_to_int(userID2);
-        if(userID2_int <= 50 && userID2_int >= 1 ) break;
-        else {
-            SetConsoleTextAttribute(hStdOut, FOREGROUND_RED);
-            cout << "\tThe user id does not exist. Try again: ";
-        }
-    }
-    SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
-    cout << "\tSimilarity between user " << userID1_int << " and " << userID2_int << " is: ";
-    cout << similarity_all[userID1_int - 1][userID2_int - 1] << endl << endl;
-    while(1) {
-        cout << "\tPress 'r' to retry, 'm' to Main menu, and 'q' to Quit\n";
-        char c;
-        c = getch();
-        if(c == 'm') mainPage();
-        else if(c == 'q') exit(0);
-        else if(c == 'r') displaySimilarity();
-    }
-}
-
-void recommendationPrinter(vector<int> nMovies, vector<int> neighbours, int userID_int){
-    int cnt = 3;
-    HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
-    SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
-
-    printf("\n\tTop-%d Recommendations for user %d are:\n\n", cnt, userID_int);
-
-    cout << left << setw(15) << "\tMovie ID" << left << setw(50) << "Movie name" << left << setw(10) << "Year" << left << setw(15) << "Predicted Rating\n";
-    cout << left << setw(15) << "\t--------" << left << setw(50) << "----------" << left << setw(10) << "----" << left << setw(15) << "----------------\n\t";
-
-    for(int i = 0; i < cnt; i++){
-        int movieID = nMovies[i];
-        float value = prediction_value(userID_int, movieID, neighbours);
-        float nearest = roundf(value * 100) / 100;
-
-        cout << left << setw(15) << movies[movieID].ID;
-        cout << left << setw(50) << movies[movieID].name;
-        cout << left << setw(10) << movies[movieID].year;
-        cout << left << helper(15, float_to_str(nearest));
-        cout << "\n\t";
-    }
-}
-
-void recommendationPrinterAll(vector<int> nMovies, vector<int> neighbours, int userID_int){
-    HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
-    SetConsoleTextAttribute(hStdOut, 0x09);
-    printf("\n\n\tPrediction of unseen movies by user %d: \n\n", userID_int);
-    SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
-
-    cout << left << setw(15) << "\tMovie ID" << left << setw(15) << "Predicted Rating\n";
-    cout << left << setw(15) << "\t--------" << left << setw(15) << "----------------\n\t";
-
-    for(size_t i = 0; i < nMovies.size(); i++){
-        int movieID = nMovies[i];
-        float value = prediction_value(userID_int, movieID, neighbours);
-        float nearest = roundf(value * 100) / 100;
-
-        cout << left << setw(15) << movies[movieID].ID;
-        if(nearest == 0.0f) {
-            cout << left << "Not predictable";
-        }
-        else cout << left << helper(15, float_to_str(nearest));
-        cout << "\n\t";
-    }
-}
-
-void generateRecommendation(){
-    system("CLS");
-    fflush(stdout);
-    HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
-    SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
-    cout << "\t-----------------------------\n";
-    cout << "\tGenerate Recommendation\n";
-    cout << "\t-----------------------------\n\n";
-
-    int userID_int = 0;
-    SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
-    cout << "\tEnter user ID: ";
-    string userID = "";
-    while(1) {
-        SetConsoleTextAttribute(hStdOut, FOREGROUND_GREEN);
-        getline(cin, userID);
-        userID_int = string_to_int(userID);
-        if(userID_int <= 50 && userID_int >= 1 ) break;
-        else {
-            SetConsoleTextAttribute(hStdOut, FOREGROUND_RED);
-            cout << "\tThe user id does not exist. Try again: ";
-        }
-    }
-
-    vector<int> nMovies = prefer_movie(userID_int, 60);
-    vector<int> neighbours = topNSimilarities(userID_int, NUMBEROFNEIGHBOURS);
-
-    // Top three recommendations
-    recommendationPrinter(nMovies, neighbours, userID_int);
-
-    while(1) {
-        SetConsoleTextAttribute(hStdOut, 0x09);
-        cout << "\n\n\t====What do you want to do?====\n";
-        SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
-
-        cout << "\ta. Display all predictions for this user" << endl;
-        cout << "\tb. Retry" << endl;
-        cout << "\tc. Back to main menu" << endl;
-        cout << "\td. Exit" << endl;
-        cout << "\n\tYour Choice: ";
-        SetConsoleTextAttribute(hStdOut, FOREGROUND_GREEN);
-        char choice;
-        choice = getch();
-        SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
-        switch (choice) {
-        case 'a':
-            // All of the recommendations
-            recommendationPrinterAll(nMovies, neighbours, userID_int);
-            break;
-        case 'b':
-            generateRecommendation();
-            break;
-        case 'c':
-            mainPage();
-            break;
-        case 'd':
-            exit(0);
-            break;
-        default:
-            break;
-        }
-        cout << endl;
-    }
-}
-
-void check(char a)
-{
+void check(char a) {
     switch(a)
     {
     case '1':
@@ -435,36 +391,67 @@ void check(char a)
     }
 }
 
+/*------------------------------------------------------------------------------------------------------------------------------------------------------*/
+void recommendationPrinter(vector<int> nMovies, vector<int> neighbours, int userID_int){
+    int cnt = 3;
+    HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
 
-int main() {
-    load_movies();
-    load_rating_mat();
-    calc_similarity();
+    printf("\n\tTop-%d Recommendations for user %d are:\n\n", cnt, userID_int);
 
-    mainPage();
+    cout << left << setw(15) << "\tMovie ID" << left << setw(50) << "Movie name" << left << setw(10) << "Year" << left << setw(15) << "Predicted Rating\n";
+    cout << left << setw(15) << "\t--------" << left << setw(50) << "----------" << left << setw(10) << "----" << left << setw(15) << "----------------\n\t";
 
-    system("PAUSE");
+    for(int i = 0; i < cnt; i++){
+        int movieID = nMovies[i];
+        float value = prediction_value(userID_int, movieID, neighbours);
+        float nearest = roundf(value * 100) / 100;
+
+        cout << left << setw(15) << movies[movieID].ID;
+        cout << left << setw(50) << movies[movieID].name;
+        cout << left << setw(10) << movies[movieID].year;
+        cout << left << helper(15, float_to_str(nearest));
+        cout << "\n\t";
+    }
+}
+
+void recommendationPrinterAll(vector<int> nMovies, vector<int> neighbours, int userID_int){
+    HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    SetConsoleTextAttribute(hStdOut, 0x09);
+    printf("\n\n\tPrediction of unseen movies by user %d: \n\n", userID_int);
+    SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+
+    cout << left << setw(15) << "\tMovie ID" << left << setw(15) << "Predicted Rating\n";
+    cout << left << setw(15) << "\t--------" << left << setw(15) << "----------------\n\t";
+
+    for(size_t i = 0; i < nMovies.size(); i++){
+        int movieID = nMovies[i];
+        float value = prediction_value(userID_int, movieID, neighbours);
+        float nearest = roundf(value * 100) / 100;
+
+        cout << left << setw(15) << movies[movieID].ID;
+        if(nearest == 0.0f) {
+            cout << left << "Not predictable";
+        }
+        else cout << left << helper(15, float_to_str(nearest));
+        cout << "\n\t";
+    }
+}
+
+void recommendationPrintOptions(){
+    HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    SetConsoleTextAttribute(hStdOut, 0x09);
+    cout << "\n\n\t====What do you want to do?====\n";
+    SetConsoleTextAttribute(hStdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+
+    cout << "\ta. Display all predictions for this user" << endl;
+    cout << "\tb. Retry" << endl;
+    cout << "\tc. Back to main menu" << endl;
+    cout << "\td. Exit" << endl;
+    cout << "\n\tYour Choice: ";
 }
 
 /*------------------------------------------------------------------------------------------------------------------------------*/
-
-int string_to_int(string str) {
-    int res = 0;
-
-    string s = str;
-    stringstream stoi(s);
-
-    stoi >> res;
-    return res;
-}
-
-string float_to_str(float val){
-    stringstream stream;
-    stream << val;
-    string res = stream.str();
-    return res;
-}
-
 
 movie moviesProcessor(vector<string> details){
     movie temp;
@@ -486,39 +473,6 @@ movie moviesProcessor(vector<string> details){
     return temp;
 }
 
-void update_movies_files(vector<movie> movies)
-{
-    ofstream ofile("Movies.txt");
-    for(size_t  i = 0; i < movies.size(); i++)
-    {
-        ofile<<movies[i].ID<<'\t'<<movies[i].name<<'\t'<<movies[i].year<<'\t';
-        ofile<<movies[i].yearDetail<<'\t'<<movies[i].link<<'\t'<<movies[i].genre;
-        if(i != movies.size() - 1){
-            ofile<<endl;
-        }
-    }
-}
-
-void update_ratings_files(vector<movie> movies){
-    ofstream ofile("Ratings.txt");
-    for(int i = 0; i < USERS_LENGTH; i++)
-    {
-        for(size_t j = 0; j < movies.size(); j++)
-        {
-            if(static_cast<int>(movies[j].rating[i]) != 0){
-                ofile<<(i+1)<<'\t'<<movies[j].ID<<'\t'<<static_cast<int>(movies[j].rating[i]);
-                if(j != movies.size() - 1 || i != USERS_LENGTH - 1){
-                    ofile<<endl;
-                }
-            }
-        }
-    }
-}
-void remove_movie(int movieID)
-{
-    int movie_index = get_movie_index(movieID);
-    movies.erase(movies.begin() + movie_index);
-}
 void load_movies(){
     ifstream file("Movies.txt");
     string line;
@@ -564,6 +518,37 @@ void load_rating_mat(){
         if (index2_ > 20) cout << index2_;
         tokens.clear();
     }
+}
+
+void update_movies_file(vector<movie> movies) {
+    ofstream ofile("Movies.txt");
+    for(size_t  i = 0; i < movies.size(); i++) {
+        ofile<<movies[i].ID<<'\t'<<movies[i].name<<'\t'<<movies[i].year<<'\t';
+        ofile<<movies[i].yearDetail<<'\t'<<movies[i].link<<'\t'<<movies[i].genre;
+        if(i != movies.size() - 1){
+            ofile<<endl;
+        }
+    }
+}
+
+void update_ratings_file(vector<movie> movies){
+    ofstream ofile("Ratings.txt");
+    for(int i = 0; i < USERS_LENGTH; i++) {
+        for(size_t j = 0; j < movies.size(); j++) {
+            if(static_cast<int>(movies[j].rating[i]) != 0){
+                ofile<<(i+1)<<'\t'<<movies[j].ID<<'\t'<<static_cast<int>(movies[j].rating[i]);
+                if(j != movies.size() - 1 || i != USERS_LENGTH - 1)
+                    ofile<<endl;
+            }
+        }
+    }
+}
+
+void remove_movie(int movieID) {
+    int movie_index = get_movie_index(movieID);
+    movies.erase(movies.begin() + movie_index);
+    update_movies_file(movies);
+    update_ratings_file(movies);
 }
 
 float similarity(int userID0, int userID1){
@@ -667,6 +652,8 @@ vector<int> prefer_movie(int userID, int topNMovies){
     return moviesID;
 }
 
+/*--------------------------------------------------------------------------------------------------------------------------*/
+
 string helper(int width, const string& str) {
     int len = str.length();
     if(width < len) { return str; }
@@ -675,4 +662,21 @@ string helper(int width, const string& str) {
     int pad1 = diff/2;
     int pad2 = diff - pad1;
     return string(pad1, ' ') + str + string(pad2, ' ');
+}
+
+int string_to_int(string str) {
+    int res = 0;
+
+    string s = str;
+    stringstream stoi(s);
+
+    stoi >> res;
+    return res;
+}
+
+string float_to_str(float val){
+    stringstream stream;
+    stream << val;
+    string res = stream.str();
+    return res;
 }
